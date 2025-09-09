@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Combination Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { text-align: center; color: #333; }
+        .input-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover { background: #005a87; }
+        .result-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #007cba;
+        }
+        .stats {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Word Combination Analyzer</h1>
+        
+        <div class="input-group">
+            <label for="words">Enter words (separated by spaces):</label>
+            <input type="text" id="words" placeholder="e.g., fire water earth" value="fire water earth">
+        </div>
+        
+        <div class="input-group">
+            <label for="maxLength">Maximum combination length:</label>
+            <input type="number" id="maxLength" min="2" max="6" value="3">
+        </div>
+        
+        <button onclick="analyzeWords()">Analyze Combinations</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function analyzeWords() {
+            const words = document.getElementById('words').value.trim();
+            const maxLength = document.getElementById('maxLength').value;
+            const resultsDiv = document.getElementById('results');
+            
+            if (!words) {
+                resultsDiv.innerHTML = '<div style="color: red;">Please enter some words.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div>Analyzing...</div>';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ words: words, max_length: parseInt(maxLength) })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultsDiv.innerHTML = `<div style="color: red;">${data.error}</div>`;
+                    return;
+                }
+                
+                let html = `<div class="stats">
+                    Generated: ${data.total_generated} | Filtered: ${data.filtered_count} | Unique: ${data.unique_count}
+                </div>`;
+                
+                html += '<h3>Results:</h3>';
+                data.results.forEach(result => {
+                    html += `<div class="result-item">
+                        <strong>${result.result}</strong> - ${result.combination} (${result.length} chars)
+                    </div>`;
+                });
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<div style="color: red;">Error occurred while analyzing.</div>';
+            }
+        }
+    </script>
+</body>
+</html>
